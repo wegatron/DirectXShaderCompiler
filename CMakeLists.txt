@@ -419,6 +419,31 @@ if(CMAKE_CROSSCOMPILING OR (LLVM_OPTIMIZED_TABLEGEN AND LLVM_ENABLE_ASSERTIONS))
   set(LLVM_USE_HOST_TOOLS ON)
 endif()
 
+# HLSL Change - Force use of host tools when building for Android or iOS
+# This prevents building target platform executables for tablegen and other LLVM tools
+# that are only needed during build time, not runtime
+if(DEFINED ANDROID OR DARWIN_TARGET_OS_NAME STREQUAL "ios")
+  message(STATUS "Detected mobile platform build (Android: ${ANDROID}, iOS: ${DARWIN_TARGET_OS_NAME}), using host tools")
+  set(LLVM_USE_HOST_TOOLS ON)
+  
+  # Also disable building target platform tools and utilities since they cannot run on mobile devices
+  # and are not needed for cross-compilation
+  if(NOT DEFINED LLVM_INCLUDE_TOOLS)
+    set(LLVM_INCLUDE_TOOLS OFF)
+    message(STATUS "Disabled LLVM_INCLUDE_TOOLS for mobile platform build")
+  endif()
+  
+  if(NOT DEFINED LLVM_BUILD_TOOLS)
+    set(LLVM_BUILD_TOOLS OFF)
+    message(STATUS "Disabled LLVM_BUILD_TOOLS for mobile platform build")
+  endif()
+  
+  if(NOT DEFINED LLVM_INCLUDE_UTILS)
+    set(LLVM_INCLUDE_UTILS OFF)
+    message(STATUS "Disabled LLVM_INCLUDE_UTILS for mobile platform build")
+  endif()
+endif()
+
 if (LLVM_BUILD_INSTRUMENTED OR LLVM_BUILD_INSTRUMENTED_COVERAGE)
   if(NOT LLVM_PROFILE_MERGE_POOL_SIZE)
     # A pool size of 1-2 is probably sufficient on a SSD. 3-4 should be fine

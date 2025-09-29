@@ -97,8 +97,22 @@ bool RelaxedPrecisionVisitor::visit(SpirvBinaryOp *inst) {
           inst->getOperand1()->getAstResultType()) &&
       inst->getOperand2()->isRelaxedPrecision() &&
       isScalarOrNonStructAggregateOfNumericalTypes(
-          inst->getOperand2()->getAstResultType()))
+          inst->getOperand2()->getAstResultType())) {
     inst->setRelaxedPrecision();
+    return true;
+  }
+  
+  // If either operand is RelaxedPrecision and involves numerical operations,
+  // and the operation is compatible with relaxed precision, apply RelaxedPrecision.
+  // This handles cases like: min16float3 * 2.0f
+  if ((inst->getOperand1()->isRelaxedPrecision() &&
+       isScalarOrNonStructAggregateOfNumericalTypes(
+           inst->getOperand1()->getAstResultType())) ||
+      (inst->getOperand2()->isRelaxedPrecision() &&
+       isScalarOrNonStructAggregateOfNumericalTypes(
+           inst->getOperand2()->getAstResultType()))) {
+    inst->setRelaxedPrecision();
+  }
   return true;
 }
 
